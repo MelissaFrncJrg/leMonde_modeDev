@@ -1,4 +1,4 @@
-import { Component } from '@angular/core';
+import { Component, HostListener } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 
@@ -10,4 +10,10 @@ import { CommonModule } from '@angular/common';
 })
 export class HeaderComponent {
   title = 'Header';
+   isScrolled = false;
+
+  @HostListener('window:scroll', [])
+  onWindowScroll() {
+    this.isScrolled = window.pageYOffset > 0;
+  }
 }
