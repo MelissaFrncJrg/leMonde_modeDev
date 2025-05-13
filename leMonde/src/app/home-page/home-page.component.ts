@@ -3,11 +3,12 @@ import { Component, Input, OnInit } from '@angular/core';
 import { Observable } from 'rxjs';
 import { Article } from '../models/article.model';
 import { RssService } from '../services/parsing.service';
+import { RouterModule } from '@angular/router';
 
 @Component({
   selector: 'app-home-page',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, RouterModule],
   templateUrl: './home-page.component.html',
   styleUrls: ['./home-page.component.scss'],
 })

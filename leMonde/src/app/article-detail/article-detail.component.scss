@@ -1,43 +1,4 @@
-/* Global Styles */
-body {
-    font-family: 'Arial', sans-serif;
-    background-color: #f8f9fa;
-}
-
-/* Main Content */
-.card {
-    border-radius: 10px;
-    overflow: hidden;
-}
-
-.card-title {
-    font-size: 1.75rem;
-    font-weight: bold;
-}
-
-.card-text {
-    font-size: 1rem;
-    line-height: 1.6;
-}
-
-/* Sidebar */
-.card-header {
-    font-size: 1.2rem;
-    font-weight: bold;
-    background-color: #007bff;
-    color: white;
-}
-
-.list-group-item {
-    font-size: 0.95rem;
-}
-
-/* Responsive */
-@media (max-width: 768px) {
-    .card-title {
-        font-size: 1.5rem;
-    }
-    .list-group-item {
-        font-size: 0.85rem;
-    }
+img {
+  max-height: 400px;
+  object-fit: cover;
 }
