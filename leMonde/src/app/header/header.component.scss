@@ -1,5 +1,6 @@
 .header{
     padding: 10px;
+    background-color: #F0F0F0;
     .logo{
         width: 5%;
         .img{
@@ -15,6 +16,7 @@
         justify-content: center;
         gap: 25px;
         width: 80%;
+        color: #2C2C2C;
         ul, li{
             list-style: none;
         }
@@ -24,7 +26,19 @@
         display: flex;
         align-items: center;
         justify-content: center;
+        gap: 25px;
+        .dropdown-item{
+          display: flex;
+          background-color: #008B8B;
+          color: white;
+          align-items: center;
+          justify-content: center;
+          padding: 5px;
+        }
     }
+}
+.p{
+  margin: 0px;
 }
 
 /* Masquer le menu par défaut */
