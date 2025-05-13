@@ -1,5 +1,4 @@
 # leMonde_modeDev
-ybvgbu
 # Consommation des flux RSS de LeMonde.fr avec Angular (TypeScript)
 
 Ce projet Angular permet de récupérer et d’afficher les articles issus des flux RSS du site [LeMonde.fr](https://www.lemonde.fr), à l’aide de TypeScript et de l’API `HttpClient`.
