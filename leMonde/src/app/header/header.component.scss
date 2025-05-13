@@ -1,20 +1,32 @@
+header {
+  position: sticky;
+  top: 0;
+  z-index: 999;
+  background-color: white;
+  transition: all 0.3s ease;
+
+  &.fixed {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    // Garde le même style
+    background-color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+}
 .header{
-    padding: 10px;
-    background-color: #F0F0F0;
     .logo{
         width: 5%;
-        // .img{
-        //     width: 50px;
-        //     // height: 50px;
-        //     // border-radius: 60px;
-        //     // background-color: rgb(129, 129, 129);
-        // }
+        .img{
+            width: 70px;
+            margin-left: 10px;
+        }
         
     }
     .lien{
         align-items: center;
         justify-content: center;
-        gap: 25px;
+        gap: 30px;
         width: 80%;
         color: #2C2C2C;
         ul, li{
@@ -27,6 +39,7 @@
         align-items: center;
         justify-content: center;
         gap: 25px;
+        margin-right: 10px;
         .dropdown-item{
           display: flex;
           background-color: #008B8B;
@@ -60,4 +73,7 @@ p{
 /* Optionnel : transition fluide */
 .dropdown-menu {
   transition: all 0.3s ease-in-out;
+}
+.dropdown-item{
+  background-color: #F0F0F0;
 }
