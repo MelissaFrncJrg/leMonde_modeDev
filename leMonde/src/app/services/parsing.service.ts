@@ -249,9 +249,12 @@ export class RssService {
    */
   private getElementTextContent(
     parentElement: Element,
-    selector: string
+    tagName: string
   ): string {
-    const element = parentElement.querySelector(selector);
-    return element ? element.textContent || '' : '';
+    const elements = parentElement.getElementsByTagName(tagName);
+    if (elements.length > 0) {
+      return elements[0].textContent || '';
+    }
+    return '';
   }
 }
