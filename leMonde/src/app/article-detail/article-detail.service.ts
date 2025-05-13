@@ -1,16 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable, map } from 'rxjs';
-
-export interface Article {
-  title: string;
-  pubDate: string;
-  updated: string;
-  description: string;
-  link: string;
-  imageUrl?: string;
-}
-
+import { Article } from '../models/article.model';
 
 
 @Injectable({
