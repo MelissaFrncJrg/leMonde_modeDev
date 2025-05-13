@@ -4,5 +4,7 @@ export interface Article {
   updated: string;
   description: string;
   link: string;
-  imageUrl?: string;
+  imageUrl: string;
+  mediaDescription: string;
+  mediaCredit: string;
 }
