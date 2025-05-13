@@ -11,6 +11,7 @@ import { CommonModule } from '@angular/common';
 export class HeaderComponent {
   title = 'Header';
    isScrolled = false;
+   
 
   @HostListener('window:scroll', [])
   onWindowScroll() {
