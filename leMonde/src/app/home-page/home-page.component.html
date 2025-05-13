@@ -1,1 +1,10 @@
-<p>home-page works!</p>
+<!-- home-page.component.html -->
+<div class="articles-container">
+  <div class="card" *ngFor=" ">
+    <h3>{{ article.title }}</h3>
+    <p [innerHTML]="article.description"></p>
+    <p class="date">{{ article.pubDate | date: 'medium' }}</p>
+    <a [href]="article.link" target="_blank">Lire l'article</a>
+  </div>
+</div>
+
