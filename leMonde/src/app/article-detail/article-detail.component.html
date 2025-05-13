@@ -1,36 +1,36 @@
-<div class="container mt-5" *ngIf="article">
-    <div class="row">
-        <!-- Main Content -->
-        <div class="col-md-8">
-            <div class="card mb-4">
-                <img [src]="article.imageUrl || 'https://via.placeholder.com/800x400'" class="card-img-top" alt="Article Image">
-                <div class="card-body">
-                    <h2 class="card-title">{{ article.title }}</h2>
-                    <p class="card-text text-muted">Publié le {{ article.pubDate}}</p>
-                    <hr>
-                    <p class="card-text" [innerHTML]="article.description"></p>
-                </div>
-            </div>
-        </div>
+<div *ngIf="article" class="container py-4">
+  <button class="btn btn-link mb-3" (click)="back()">← Retour</button>
 
-        <!-- Sidebar -->
-        <div class="col-md-4">
-            <div class="card mb-4">
-                <div class="card-header">
-                    Informations supplémentaires
-                </div>
-                <ul class="list-group list-group-flush">
-                    <li class="list-group-item">Lien vers l'article :
-                        <a [href]="article.link" target="_blank">{{ article.link }}</a>
-                    </li>
-                    <li class="list-group-item">Publié le : {{ article.pubDate}}</li>
-                    <li class="list-group-item">Mis à jour le : {{ article.updated || 'Non disponible' }}</li>
-                </ul>
-            </div>
-        </div>
-    </div>
-</div>
+  <h1 class="mb-3">{{ article.title }}</h1>
 
-<div class="container mt-5" *ngIf="!article">
-    <p class="text-muted">Aucun article trouvé pour ce titre.</p>
+  <p class="text-muted">
+    Publié le {{ article.pubDate | date : 'medium' }}
+    <span
+      *ngIf="article.updated && article.updated !== article.pubDate"
+    >— mis à jour le {{ article.updated | date : 'medium' }}</span>
+  </p>
+
+  <img
+    *ngIf="article.imageUrl"
+    [src]="article.imageUrl"
+    class="img-fluid mb-4 rounded"
+    [alt]="article.mediaDescription || article.title"
+  />
+
+  <p class="fst-italic" *ngIf="article.mediaDescription">
+    {{ article.mediaDescription }}
+  </p>
+  <p class="text-end" *ngIf="article.mediaCredit">© {{ article.mediaCredit }}</p>
+
+  <div [innerHTML]="article.description"></div>
+
+  <a
+    *ngIf="article.link"
+    [href]="article.link"
+    target="_blank"
+    rel="noopener"
+    class="btn btn-primary mt-4"
+  >
+    Lire l’article complet sur Le Monde
+  </a>
 </div>
