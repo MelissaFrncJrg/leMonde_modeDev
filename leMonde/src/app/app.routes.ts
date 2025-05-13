@@ -5,5 +5,5 @@ import { ArticleDetailComponent } from './article-detail/article-detail.componen
 export const routes: Routes = [
   { path: '', redirectTo: 'home', pathMatch: 'full'},
   { path: 'home', component:HomePageComponent},
-  { path: 'article', component: ArticleDetailComponent },
+  { path: 'videogames/article/:slug', component: ArticleDetailComponent },
 ];

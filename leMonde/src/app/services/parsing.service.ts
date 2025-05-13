@@ -1,260 +1,376 @@
 import { Injectable } from '@angular/core';
+
 import { HttpClient } from '@angular/common/http';
-import { Observable, throwError, of, forkJoin } from 'rxjs';
-import { map, catchError, shareReplay, tap } from 'rxjs/operators';
+
+import {
+
+  Observable,
+
+  throwError,
+
+  of,
+
+  forkJoin
+
+} from 'rxjs';
+
+import {
+
+  map,
+
+  catchError,
+
+  shareReplay,
+
+  tap
+
+} from 'rxjs/operators';
+
 import { Article } from '../models/article.model';
+
 import { FeedSource } from '../models/feed-source.model';
 
 @Injectable({
+
   providedIn: 'root',
+
 })
+
 export class RssService {
+
   private sources: FeedSource[] = [
+
     {
+
       id: 'gastronomy',
+
       name: 'Gastronomy',
+
       url: 'https://www.lemonde.fr/gastronomie/rss_full.xml',
+
       category: 'gastronomy',
+
     },
+
     {
+
       id: 'videogames',
+
       name: 'Video Games',
+
       url: 'https://www.lemonde.fr/jeux-video/rss_full.xml',
+
       category: 'videogames',
+
     },
+
+    // ajoutez d'autres sources si besoin…
+
   ];
 
   private articlesCache: {
+
     [sourceId: string]: { articles: Article[]; timestamp: number };
+
   } = {};
 
-  private cacheDuration = 30 * 60 * 1000;
+  private cacheDuration = 30 * 60 * 1000; // 30 minutes
+
+  // Proxy CORS pour développement
+
+  private corsProxy = 'https://cors-anywhere.herokuapp.com/';
 
   constructor(private http: HttpClient) {}
 
+  /** Renvoie toutes les sources */
+
   getSources(): FeedSource[] {
+
     return [...this.sources];
+
   }
+
+  /** Sources filtrées par catégorie */
 
   getSourcesByCategory(category: string): FeedSource[] {
-    return this.sources.filter((source) => source.category === category);
+
+    return this.sources.filter(s => s.category === category);
+
   }
 
+  /** Ajoute une source si elle n'existe pas */
+
   addSource(source: FeedSource): void {
-    if (!this.sources.some((s) => s.id === source.id)) {
+
+    if (!this.sources.some(s => s.id === source.id)) {
+
       this.sources.push(source);
+
     }
+
   }
 
   /**
-   * @param sourceId
-   * @param forceRefresh
+
+   * Recupère et met en cache les articles d'une source
+
    */
+
   getArticlesBySource(
+
     sourceId: string,
+
     forceRefresh = false
+
   ): Observable<Article[]> {
-    const source = this.sources.find((s) => s.id === sourceId);
+
+    const source = this.sources.find(s => s.id === sourceId);
 
     if (!source) {
-      return throwError(
-        () => new Error(`Source avec l'ID ${sourceId} non trouvée`)
-      );
+
+      return throwError(() => new Error(`Source ${sourceId} non trouvée`));
+
     }
 
     const now = Date.now();
-    if (
-      !forceRefresh &&
-      this.articlesCache[sourceId] &&
-      now - this.articlesCache[sourceId].timestamp < this.cacheDuration
-    ) {
-      return of(this.articlesCache[sourceId].articles);
+
+    const cached = this.articlesCache[sourceId];
+
+    if (!forceRefresh && cached && now - cached.timestamp < this.cacheDuration) {
+
+      return of(cached.articles);
+
     }
 
     return this.fetchAndParseRss(source.url).pipe(
-      tap((articles) => {
-        this.articlesCache[sourceId] = {
-          articles,
-          timestamp: Date.now(),
-        };
+
+      tap(arts => {
+
+        this.articlesCache[sourceId] = { articles: arts, timestamp: Date.now() };
+
       })
+
     );
+
   }
 
   /**
-   *
-   * @param forceRefresh
+
+   * Récupère tous les articles de toutes les sources
+
    */
+
   getAllArticles(forceRefresh = false): Observable<Article[]> {
-    const requests = this.sources.map((source) =>
-      this.getArticlesBySource(source.id, forceRefresh)
+
+    const reqs = this.sources.map(s =>
+
+      this.getArticlesBySource(s.id, forceRefresh)
+
     );
 
-    return forkJoin(requests).pipe(
-      map((articlesArrays) => {
-        const allArticles = articlesArrays.flat();
+    return forkJoin(reqs).pipe(
 
-        return allArticles.sort((a, b) => {
-          const dateA = new Date(a.pubDate || a.updated).getTime();
-          const dateB = new Date(b.pubDate || b.updated).getTime();
-          return dateB - dateA;
-        });
-      }),
-      catchError((error) => {
-        console.error(
-          'Erreur lors de la récupération de tous les articles:',
-          error
-        );
-        return throwError(
-          () => new Error('Impossible de récupérer tous les articles')
-        );
+      map(arrays =>
+
+        arrays
+
+          .flat()
+
+          .sort((a, b) =>
+
+            new Date(b.pubDate || b.updated).getTime() -
+
+            new Date(a.pubDate || a.updated).getTime()
+
+          )
+
+      ),
+
+      catchError(err => {
+
+        console.error('Erreur getAllArticles', err);
+
+        return throwError(() => new Error('Impossible de récupérer tous les articles'));
+
       })
+
     );
+
   }
 
   /**
-   *
-   * @param category
-   * @param forceRefresh
-   */
-  getArticlesByCategory(
-    category: string,
-    forceRefresh = false
-  ): Observable<Article[]> {
-    const sourcesInCategory = this.getSourcesByCategory(category);
 
-    if (sourcesInCategory.length === 0) {
+   * Récupère les articles d'une catégorie
+
+   */
+
+  getArticlesByCategory(
+
+    category: string,
+
+    forceRefresh = false
+
+  ): Observable<Article[]> {
+
+    const feeds = this.getSourcesByCategory(category);
+
+    if (!feeds.length) {
+
       return of([]);
+
     }
 
-    const requests = sourcesInCategory.map((source) =>
-      this.getArticlesBySource(source.id, forceRefresh)
+    const reqs = feeds.map(f => this.getArticlesBySource(f.id, forceRefresh));
+
+    return forkJoin(reqs).pipe(
+
+      map(arrays =>
+
+        arrays
+
+          .flat()
+
+          .sort((a, b) =>
+
+            new Date(b.pubDate || b.updated).getTime() -
+
+            new Date(a.pubDate || a.updated).getTime()
+
+          )
+
+      )
+
     );
 
-    return forkJoin(requests).pipe(
-      map((articlesArrays) => {
-        const allArticles = articlesArrays.flat();
-
-        return allArticles.sort((a, b) => {
-          const dateA = new Date(a.pubDate || a.updated).getTime();
-          const dateB = new Date(b.pubDate || b.updated).getTime();
-          return dateB - dateA;
-        });
-      })
-    );
   }
 
   /**
-   *
-   * @param url
+
+   * Renvoie un seul article identifié par son slug
+
    */
+
+  getArticleBySlug(
+
+    category: string,
+
+    slug: string,
+
+    forceRefresh = false
+
+  ): Observable<Article | undefined> {
+
+    return this.getArticlesByCategory(category, forceRefresh).pipe(
+
+      map(list => list.find(a => a.slug === slug))
+
+    );
+
+  }
+
+  /**
+
+   * Fetch et parse le RSS en Article[]
+
+   */
+
   private fetchAndParseRss(url: string): Observable<Article[]> {
-    const corsProxy = 'https://cors-anywhere.herokuapp.com/';
-    const finalUrl = url.startsWith('http') ? `${corsProxy}${url}` : url;
+
+    const finalUrl = `${this.corsProxy}${url}`;
 
     return this.http.get(finalUrl, { responseType: 'text' }).pipe(
-      map((response) => this.parseRssToArticles(response)),
-      catchError((error) => {
-        console.error(
-          `Erreur lors de la récupération du flux RSS (${url}):`,
-          error
-        );
-        return throwError(
-          () => new Error(`Impossible de charger le flux RSS: ${url}`)
-        );
+
+      map(xml => this.parseRssToArticles(xml)),
+
+      catchError(err => {
+
+        console.error(`Erreur RSS ${url}`, err);
+
+        return throwError(() => new Error(`Impossible de charger RSS ${url}`));
+
       }),
+
       shareReplay(1)
+
     );
+
   }
 
-  /**
-   *
-   * @param xml
-   */
+  /** Parse tout le XML en liste d’items */
+
   private parseRssToArticles(xml: string): Article[] {
-    const parser = new DOMParser();
-    const xmlDoc = parser.parseFromString(xml, 'text/xml');
 
-    const isRss = xmlDoc.querySelector('rss, channel') !== null;
+    const doc = new DOMParser().parseFromString(xml, 'application/xml');
 
-    if (!isRss) {
-      throw new Error('Format de flux non reconnu');
+    const items = Array.from(doc.querySelectorAll('item'));
+
+    return items.map(item => this.parseItem(item));
+
+  }
+
+  /** Génère un slug URL-friendly à partir d’un texte */
+
+  private slugify(text: string): string {
+
+    return text
+
+      .normalize('NFD')
+
+      .replace(/[\u0300-\u036f]/g, '')  // retire accents
+
+      .toLowerCase()
+
+      .replace(/[^a-z0-9]+/g, '-')      // tout non-alphanum en ‘-’
+
+      .replace(/(^-|-$)/g, '');         // supprime tirets en début/fin
+
+  }
+
+  /** Parse un <item> en Article, avec titre, slug, etc. */
+
+  private parseItem(item: Element): Article {
+
+    const txt = (sel: string) => item.querySelector(sel)?.textContent?.trim() || '';
+
+    const title = txt('title');
+
+    // trouver l'image
+
+    let img = item.querySelector('enclosure[type^="image"]')?.getAttribute('url') || '';
+
+    if (!img) {
+
+      const tmp = document.createElement('div');
+
+      tmp.innerHTML = txt('description');
+
+      img = tmp.querySelector('img')?.getAttribute('src') || '';
+
     }
 
-    const itemElements = isRss
-      ? Array.from(xmlDoc.querySelectorAll('item'))
-      : Array.from(xmlDoc.querySelectorAll('entry'));
+    return {
 
-    return itemElements.map((item) => this.parseItemToArticle(item, isRss));
-  }
+      title,
 
-  /**
-   *
-   * @param itemElement
-   * @param isRss
-   */
-  private parseItemToArticle(itemElement: Element, isRss: boolean): Article {
-    const article: Article = {
-      title: '',
-      pubDate: '',
-      updated: '',
-      description: '',
-      link: '',
-      imageUrl: '',
-      mediaDescription: '',
-      mediaCredit: '',
+      slug: this.slugify(title),          // ← slug ajouté ici
+
+      pubDate: txt('pubDate'),
+
+      updated: txt('updated') || txt('pubDate'),
+
+      description: txt('description'),
+
+      link: txt('link'),
+
+      imageUrl: img,
+
+      mediaDescription: txt('media\\:description'),
+
+      mediaCredit: txt('media\\:credit')
+
     };
 
-    if (isRss) {
-      article.title = this.getElementTextContent(itemElement, 'title');
-      article.pubDate = this.getElementTextContent(itemElement, 'pubDate');
-      article.updated =
-        this.getElementTextContent(itemElement, 'lastBuildDate') ||
-        article.pubDate;
-      article.description = this.getElementTextContent(
-        itemElement,
-        'description'
-      );
-      article.link = this.getElementTextContent(itemElement, 'link');
-
-      const enclosure = itemElement.querySelector('enclosure[type^="image"]');
-      if (enclosure && enclosure.hasAttribute('url')) {
-        article.imageUrl = enclosure.getAttribute('url') || '';
-      } else {
-        const tempDiv = document.createElement('div');
-        tempDiv.innerHTML = article.description;
-        const firstImg = tempDiv.querySelector('img');
-        if (firstImg && firstImg.hasAttribute('src')) {
-          article.imageUrl = firstImg.getAttribute('src') || '';
-        }
-      }
-
-      article.mediaDescription = this.getElementTextContent(
-        itemElement,
-        'media:description'
-      );
-      article.mediaCredit = this.getElementTextContent(
-        itemElement,
-        'media:credit'
-      );
-    }
-
-    return article;
   }
 
-  /**
-   *
-   * @param parentElement
-   * @param selector
-   */
-  private getElementTextContent(
-    parentElement: Element,
-    tagName: string
-  ): string {
-    const elements = parentElement.getElementsByTagName(tagName);
-    if (elements.length > 0) {
-      return elements[0].textContent || '';
-    }
-    return '';
-  }
 }
+

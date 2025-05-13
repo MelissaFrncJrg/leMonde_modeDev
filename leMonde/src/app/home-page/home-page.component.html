@@ -1,1 +1,27 @@
+<div *ngIf="error" class="alert alert-danger">{{ error }}</div>
 
+<ul *ngIf="!loading && !error" class="list-group">
+<li
+    *ngFor="let article of articles$ | async; trackBy: trackByLink"
+    class="list-group-item mb-3"
+>
+<!-- Utilisation de category directement -->
+<a
+      [routerLink]="['/categorie', category, 'article', article.slug]"
+      class="h5 d-block mb-1"
+>
+      {{ article.title }}
+</a>
+
+    <p [innerHTML]="article.description" class="mb-2"></p>
+
+    <a
+      [href]="article.link"
+      target="_blank"
+      rel="noopener"
+      class="btn btn-sm btn-primary"
+>
+      Lire la suite
+</a>
+</li>
+</ul>
