@@ -14,12 +14,36 @@
         align-items: center;
         justify-content: center;
         gap: 25px;
-        width: 85%;
+        width: 80%;
         ul, li{
             list-style: none;
         }
     }
     .abonnement{
-        width: 10%;
+        width: 15%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
+}
+
+/* Masquer le menu par défaut */
+.dropdown-menu {
+  display: none;
+  position: absolute;
+  top: 100%; // Affiché juste en dessous du parent
+  left: 0;   // Aligné à gauche du lien parent
+  transform: none; // Aucune transformation latérale
+  z-index: 1000;
+  transition: all 0.3s ease-in-out;
+}
+
+/* Afficher au survol */
+.nav-item:hover .dropdown-menu {
+  display: block;
+}
+
+/* Optionnel : transition fluide */
+.dropdown-menu {
+  transition: all 0.3s ease-in-out;
 }
