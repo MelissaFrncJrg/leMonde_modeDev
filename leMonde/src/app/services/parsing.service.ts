@@ -5,9 +5,7 @@ import { map, catchError, shareReplay, tap } from 'rxjs/operators';
 import { Article } from '../models/article.model';
 import { FeedSource } from '../models/feed-source.model';
 
-@Injectable({
-  providedIn: 'root',
-})
+@Injectable({ providedIn: 'root' })
 export class RssService {
   private sources: FeedSource[] = [
     {
@@ -46,20 +44,10 @@ export class RssService {
     }
   }
 
-  /**
-   * @param sourceId
-   * @param forceRefresh
-   */
-  getArticlesBySource(
-    sourceId: string,
-    forceRefresh = false
-  ): Observable<Article[]> {
+  getArticlesBySource(sourceId: string, forceRefresh = false): Observable<Article[]> {
     const source = this.sources.find((s) => s.id === sourceId);
-
     if (!source) {
-      return throwError(
-        () => new Error(`Source avec l'ID ${sourceId} non trouvée`)
-      );
+      return throwError(() => new Error(`Source avec l'ID ${sourceId} non trouvée`));
     }
 
     const now = Date.now();
@@ -81,48 +69,28 @@ export class RssService {
     );
   }
 
-  /**
-   *
-   * @param forceRefresh
-   */
   getAllArticles(forceRefresh = false): Observable<Article[]> {
     const requests = this.sources.map((source) =>
       this.getArticlesBySource(source.id, forceRefresh)
     );
 
     return forkJoin(requests).pipe(
-      map((articlesArrays) => {
-        const allArticles = articlesArrays.flat();
-
-        return allArticles.sort((a, b) => {
+      map((articlesArrays) =>
+        articlesArrays.flat().sort((a, b) => {
           const dateA = new Date(a.pubDate || a.updated).getTime();
           const dateB = new Date(b.pubDate || b.updated).getTime();
           return dateB - dateA;
-        });
-      }),
+        })
+      ),
       catchError((error) => {
-        console.error(
-          'Erreur lors de la récupération de tous les articles:',
-          error
-        );
-        return throwError(
-          () => new Error('Impossible de récupérer tous les articles')
-        );
+        console.error('Erreur lors de la récupération de tous les articles:', error);
+        return throwError(() => new Error('Impossible de récupérer tous les articles'));
       })
     );
   }
 
-  /**
-   *
-   * @param category
-   * @param forceRefresh
-   */
-  getArticlesByCategory(
-    category: string,
-    forceRefresh = false
-  ): Observable<Article[]> {
+  getArticlesByCategory(category: string, forceRefresh = false): Observable<Article[]> {
     const sourcesInCategory = this.getSourcesByCategory(category);
-
     if (sourcesInCategory.length === 0) {
       return of([]);
     }
@@ -132,22 +100,16 @@ export class RssService {
     );
 
     return forkJoin(requests).pipe(
-      map((articlesArrays) => {
-        const allArticles = articlesArrays.flat();
-
-        return allArticles.sort((a, b) => {
+      map((articlesArrays) =>
+        articlesArrays.flat().sort((a, b) => {
           const dateA = new Date(a.pubDate || a.updated).getTime();
           const dateB = new Date(b.pubDate || b.updated).getTime();
           return dateB - dateA;
-        });
-      })
+        })
+      )
     );
   }
 
-  /**
-   *
-   * @param url
-   */
   private fetchAndParseRss(url: string): Observable<Article[]> {
     const corsProxy = 'https://cors-anywhere.herokuapp.com/';
     const finalUrl = url.startsWith('http') ? `${corsProxy}${url}` : url;
@@ -155,26 +117,16 @@ export class RssService {
     return this.http.get(finalUrl, { responseType: 'text' }).pipe(
       map((response) => this.parseRssToArticles(response)),
       catchError((error) => {
-        console.error(
-          `Erreur lors de la récupération du flux RSS (${url}):`,
-          error
-        );
-        return throwError(
-          () => new Error(`Impossible de charger le flux RSS: ${url}`)
-        );
+        console.error(`Erreur lors de la récupération du flux RSS (${url}):`, error);
+        return throwError(() => new Error(`Impossible de charger le flux RSS: ${url}`));
       }),
       shareReplay(1)
     );
   }
 
-  /**
-   *
-   * @param xml
-   */
   private parseRssToArticles(xml: string): Article[] {
     const parser = new DOMParser();
     const xmlDoc = parser.parseFromString(xml, 'text/xml');
-
     const isRss = xmlDoc.querySelector('rss, channel') !== null;
 
     if (!isRss) {
@@ -188,11 +140,6 @@ export class RssService {
     return itemElements.map((item) => this.parseItemToArticle(item, isRss));
   }
 
-  /**
-   *
-   * @param itemElement
-   * @param isRss
-   */
   private parseItemToArticle(itemElement: Element, isRss: boolean): Article {
     const article: Article = {
       title: '',
@@ -208,13 +155,8 @@ export class RssService {
     if (isRss) {
       article.title = this.getElementTextContent(itemElement, 'title');
       article.pubDate = this.getElementTextContent(itemElement, 'pubDate');
-      article.updated =
-        this.getElementTextContent(itemElement, 'lastBuildDate') ||
-        article.pubDate;
-      article.description = this.getElementTextContent(
-        itemElement,
-        'description'
-      );
+      article.updated = this.getElementTextContent(itemElement, 'lastBuildDate') || article.pubDate;
+      article.description = this.getElementTextContent(itemElement, 'description');
       article.link = this.getElementTextContent(itemElement, 'link');
 
       const enclosure = itemElement.querySelector('enclosure[type^="image"]');
@@ -229,31 +171,18 @@ export class RssService {
         }
       }
 
-      article.mediaDescription = this.getElementTextContent(
-        itemElement,
-        'media:description'
-      );
-      article.mediaCredit = this.getElementTextContent(
-        itemElement,
-        'media:credit'
-      );
+      // ✅ CORRECT handling of media:* tags
+      article.mediaDescription = this.getElementTextContent(itemElement, 'media:description');
+      article.mediaCredit = this.getElementTextContent(itemElement, 'media:credit');
     }
 
     return article;
   }
 
-  /**
-   *
-   * @param parentElement
-   * @param selector
-   */
-  private getElementTextContent(
-    parentElement: Element,
-    tagName: string
-  ): string {
+  private getElementTextContent(parentElement: Element, tagName: string): string {
     const elements = parentElement.getElementsByTagName(tagName);
     if (elements.length > 0) {
-      return elements[0].textContent || '';
+      return elements[0].textContent?.trim() || '';
     }
     return '';
   }
